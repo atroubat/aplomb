@@ -1,0 +1,31 @@
+services:
+  aplomb:
+    build: .
+    container_name: aplomb
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/budget.db
+      - DEMO_DATABASE_PATH=/app/data/demo.db
+      - NODE_ENV=production
+      - PORT=3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik}"
+      - "traefik.http.routers.aplomb-budget.rule=Host(`${APLOMB_HOST:-aplomb.localhost}`)"
+      - "traefik.http.routers.aplomb-budget.entrypoints=web"
+      - "traefik.http.routers.aplomb-budget.service=aplomb-budget"
+      - "traefik.http.services.aplomb-budget.loadbalancer.server.port=3000"
+    networks:
+      - traefik
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://0.0.0.0:3000/api/persons"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik}

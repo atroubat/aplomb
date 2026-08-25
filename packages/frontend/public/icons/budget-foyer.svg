@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Aplomb">
+  <defs>
+    <linearGradient id="aplomb-gradient" x1="112" y1="96" x2="912" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#28B8F7"/>
+      <stop offset=".48" stop-color="#6C63FF"/>
+      <stop offset="1" stop-color="#F04D8A"/>
+    </linearGradient>
+    <linearGradient id="aplomb-glass" x1="256" y1="206" x2="762" y2="828" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity=".12"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#aplomb-gradient)"/>
+  <rect x="64" y="64" width="896" height="896" rx="174" fill="url(#aplomb-glass)" stroke="#FFFFFF" stroke-opacity=".34" stroke-width="12"/>
+  <path d="M244 410 512 238l268 172H244Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="28" stroke-linejoin="round"/>
+  <path d="M292 430h440M292 742h440" fill="none" stroke="#FFFFFF" stroke-width="48" stroke-linecap="round"/>
+  <path d="M344 444v270M456 444v270M568 444v270M680 444v270" fill="none" stroke="#FFFFFF" stroke-width="54" stroke-linecap="round"/>
+</svg>
