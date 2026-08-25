@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Aplomb" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="description" content="Le budget du foyer, simplement." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icons/budget-foyer.svg?v=5" />
+    <link rel="alternate icon" type="image/png" sizes="192x192" href="/icons/icon-192-v5.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v5.png" />
+    <style>
+      :root {
+        --app-screen-background: #f4f5fb;
+        --app-screen-gradient:
+          radial-gradient(60rem 60rem at 12% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
+          radial-gradient(50rem 50rem at 100% 0%, rgba(217, 70, 239, 0.14), transparent 55%),
+          radial-gradient(45rem 45rem at 50% 120%, rgba(34, 211, 238, 0.12), transparent 55%);
+      }
+
+      html.dark {
+        --app-screen-background: #070a16;
+        --app-screen-gradient:
+          radial-gradient(65rem 65rem at 10% -15%, rgba(99, 102, 241, 0.30), transparent 60%),
+          radial-gradient(55rem 55rem at 105% 5%, rgba(217, 70, 239, 0.22), transparent 55%),
+          radial-gradient(50rem 50rem at 50% 130%, rgba(34, 211, 238, 0.16), transparent 55%);
+        color-scheme: dark;
+      }
+
+      html,
+      body,
+      #root {
+        min-height: 100%;
+      }
+
+      html {
+        background-color: var(--app-screen-background);
+        background-image: var(--app-screen-gradient);
+        background-attachment: fixed;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100dvh;
+      }
+
+      @media (max-width: 767px) {
+        .budget-toolbar,
+        header.mx-3.mt-3.glass.rounded-2xl {
+          flex-shrink: 0;
+          margin-top: 0 !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+          padding-top: calc(0.75rem + env(safe-area-inset-top, 0px)) !important;
+          border-top-left-radius: 0 !important;
+          border-top-right-radius: 0 !important;
+        }
+      }
+    </style>
+    <script>
+      (() => {
+        const syncThemeColor = () => {
+          const theme = document.querySelector('meta[name="theme-color"]');
+          if (theme) theme.content = document.documentElement.classList.contains('dark') ? '#070a16' : '#6366f1';
+        };
+        new MutationObserver(syncThemeColor).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        document.addEventListener('DOMContentLoaded', syncThemeColor);
+      })();
+    </script>
+    <title>Aplomb</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
