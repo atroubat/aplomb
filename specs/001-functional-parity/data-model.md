@@ -1,22 +1,22 @@
-# Data Model: Budget familial
+# Data Model: Household Budget
 
-## Agrégats
+## Aggregates
 
-- **Personne** : membre du foyer, couleur et avatar.
-- **Compte** : compte courant ou support rattaché à une personne ou au foyer.
-- **Revenu** : montant fixe ou variable, périodicité et propriétaire.
-- **Exception de revenu** : montant effectif pour un mois donné.
-- **Charge fixe** : charge commune récurrente.
-- **Charge personnelle** : charge récurrente rattachée à une personne.
-- **Produit d’épargne** : livret commun ou personnel avec objectif.
-- **Opération d’épargne** : versement ou retrait daté.
-- **Virement interne** : transfert entre comptes.
-- **Dépense réelle** : entité historique conservée pour compatibilité.
+- **Person**: household member, colour, and avatar.
+- **Account**: current account or savings vehicle assigned to a person or the household.
+- **Income**: fixed or variable amount, recurrence, and owner.
+- **Income Override**: effective amount for a given month.
+- **Fixed Charge**: recurring shared charge.
+- **Personal Charge**: recurring charge assigned to a person.
+- **Savings Account**: shared or personal savings vehicle with a goal.
+- **Savings Transaction**: dated deposit or withdrawal.
+- **Internal Transfer**: transfer between accounts.
+- **Actual Expense**: legacy entity retained for compatibility.
 
 ## Invariants
 
-- Tous les montants sont stockés en centimes entiers.
-- Une charge personnelle possède toujours une personne.
-- Une exception de revenu est unique par revenu, année et mois.
-- Un retrait d’épargne possède un motif.
-- Les suppressions respectent les relations SQLite existantes.
+- All monetary amounts are stored as integer cents.
+- A personal charge always has a person.
+- An income override is unique per income, year, and month.
+- A savings withdrawal has a reason.
+- Deletions respect existing SQLite relationships.

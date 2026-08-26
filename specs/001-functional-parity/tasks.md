@@ -1,11 +1,11 @@
-# Tasks: Refonte à parité
+# Tasks: Functional-Parity Redesign
 
-- [x] Inventorier les routes et pages historiques.
-- [x] Archiver la bêta rejetée de façon récupérable.
-- [x] Reprendre la base fonctionnelle dans le dossier Aplomb.
-- [x] Conserver les bases SQLite et les sauvegardes.
-- [x] Renommer l’identité visible sans toucher aux parcours.
-- [x] Documenter constitution, spécification, plan, modèle et API.
-- [x] Exécuter les tests et constructions de production.
-- [x] Vérifier chaque route avec les données existantes.
-- [x] Déployer avec Docker et Traefik.
+- [x] Inventory legacy routes and pages.
+- [x] Archive the rejected beta in a recoverable form.
+- [x] Bring the functional foundation into the Aplomb directory.
+- [x] Preserve SQLite databases and backups.
+- [x] Rename the visible product identity without altering user journeys.
+- [x] Document the constitution, specification, plan, model, and API.
+- [x] Run tests and production builds.
+- [x] Verify every route with existing data.
+- [x] Deploy with Docker and Traefik.

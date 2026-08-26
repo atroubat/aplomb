@@ -1,15 +1,15 @@
-# Contract: API HTTP historique
+# Contract: Legacy HTTP API
 
-Le préfixe principal est `/api`; le mode démonstration utilise `/demo/api`.
+The primary prefix is `/api`; demo mode uses `/demo/api`.
 
-| Domaine | Ressources |
+| Domain | Resources |
 |---|---|
-| Foyer | `/persons`, `/accounts` |
-| Revenus | `/incomes`, `/incomes/:id/overrides`, `/incomes/effective`, `/incomes/history` |
+| Household | `/persons`, `/accounts` |
+| Income | `/incomes`, `/incomes/:id/overrides`, `/incomes/effective`, `/incomes/history` |
 | Charges | `/fixed-charges`, `/personal-charges` |
-| Épargne | `/savings`, `/savings/:id/transactions` |
-| Calcul | `/dashboard`, `/advice` |
-| Compatibilité | `/transfers`, `/actual-expenses` |
-| Portabilité | `/export`, `/import`, `/data/reset` |
+| Savings | `/savings`, `/savings/:id/transactions` |
+| Calculations | `/dashboard`, `/advice` |
+| Compatibility | `/transfers`, `/actual-expenses` |
+| Portability | `/export`, `/import`, `/data/reset` |
 
-Les verbes HTTP, paramètres de requête et formats JSON sont ceux définis dans `packages/shared/src/schemas.ts` et les routes de `packages/backend/src/routes`. Toute rupture nécessite une nouvelle version de contrat.
+HTTP verbs, query parameters, and JSON formats are defined by `packages/shared/src/schemas.ts` and the routes in `packages/backend/src/routes`. Any breaking change requires a new contract version.

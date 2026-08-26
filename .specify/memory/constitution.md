@@ -1,27 +1,27 @@
-# Constitution Aplomb
+# Aplomb Constitution
 
-## I. Parité fonctionnelle avant tout
+## I. Functional Parity First
 
-BudgetFoyer est la référence fonctionnelle. Une refonte graphique ou technique ne doit modifier ni les routes visibles, ni les champs, ni les calculs, ni le comportement des filtres, ni les règles de persistance sans spécification approuvée séparément.
+BudgetFoyer is the functional reference. A visual or technical redesign must not alter visible routes, fields, calculations, filter behaviour, or persistence rules without a separately approved specification.
 
-## II. Séparation des responsabilités
+## II. Separation of Responsibilities
 
-- `frontend` affiche et orchestre les interactions.
-- `backend` porte les cas d’usage et l’accès SQLite.
-- `shared` porte les contrats validés partagés.
-- Les outils annexes restent isolés du budget principal.
+- `frontend` renders and orchestrates interactions.
+- `backend` owns use cases and SQLite access.
+- `shared` owns validated shared contracts.
+- Supporting tools remain isolated from the main budget application.
 
-## III. Données locales et récupérables
+## III. Local, Recoverable Data
 
-La base SQLite reste montée hors de l’image Docker. Toute migration est idempotente et précédée d’une sauvegarde. L’export JSON demeure compatible avec les données existantes.
+The SQLite database remains mounted outside the Docker image. Every migration is idempotent and preceded by a backup. JSON exports remain compatible with existing data.
 
-## IV. Changements vérifiables
+## IV. Verifiable Changes
 
-Toute modification fonctionnelle exige une spécification, des critères d’acceptation et des tests. Une modification purement graphique doit être validée contre la matrice de parité des pages.
+Every functional change requires a specification, acceptance criteria, and tests. A purely visual change must be validated against the page-parity matrix.
 
-## V. Simplicité
+## V. Simplicity
 
-La structure doit rester compréhensible sans abstraction prématurée. Les réorganisations internes doivent être progressives et ne jamais servir de prétexte à une modification produit.
+The structure must remain understandable without premature abstraction. Internal reorganisations must be incremental and must never be used as a pretext for product changes.
 
-**Version :** 1.0.0  
-**Ratifiée :** 2026-08-23
+**Version:** 1.0.0  
+**Ratified:** 2026-08-23
