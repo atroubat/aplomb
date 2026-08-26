@@ -1,38 +1,38 @@
-# Design — BudgetFoyer · Carnet financier
+# Design — BudgetFoyer · Financial Journal
 
-Système global de l’application. Chaque écran doit ressembler à une page du même carnet financier, jamais à un dashboard SaaS générique.
+The application's overall system. Every screen must feel like a page from the same financial journal, never like a generic SaaS dashboard.
 
 ## Genre
 
-Editorial utilitaire : chaleureux, précis et domestique.
+Utility editorial: warm, precise, and domestic.
 
 ## Macrostructure
 
-- Navigation horizontale compacte sur ordinateur, dock inférieur sur mobile.
-- Pages de gestion construites comme des registres : titres, résumés, lignes et séparateurs.
-- Les cartes sont réservées aux formulaires et alertes ; les données vivent dans des listes ouvertes.
-- Dashboard sous forme de point mensuel, pages métier sous forme d’index.
+- Compact horizontal navigation on desktop and a bottom dock on mobile.
+- Management pages are structured as ledgers: titles, summaries, rows, and dividers.
+- Cards are reserved for forms and alerts; data lives in open lists.
+- The dashboard takes the form of a monthly review, while domain pages take the form of an index.
 
 ## Theme
 
-- Papier crème, surface ivoire, encre brun-noir.
-- Vert forêt pour sélection, progression et actions principales.
-- Rouge brique et ambre uniquement pour les états.
-- Mode sombre brun-charbon, sans bleu SaaS.
+- Cream paper, ivory surface, and brown-black ink.
+- Forest green for selection, progress, and primary actions.
+- Brick red and amber are reserved for states.
+- A charcoal-brown dark mode, without SaaS blue.
 
 ## Typography
 
-- Manrope pour l’interface et les titres.
-- IBM Plex Mono pour les montants, dates et pourcentages.
-- Chiffres tabulaires, titres romans, aucune italique décorative.
+- Manrope for the interface and headings.
+- IBM Plex Mono for amounts, dates, and percentages.
+- Tabular figures, roman headings, and no decorative italics.
 
 ## Components
 
-- Boutons rectangulaires compacts, rayon discret.
-- Registres séparés par des règles, sans ombre.
-- Formulaires ivoire avec focus vert forêt.
-- Modales pleines, sans verre ni dégradé.
+- Compact rectangular buttons with a subtle radius.
+- Ledgers separated by rules, without shadows.
+- Ivory forms with a forest-green focus state.
+- Solid modals, without glass or gradients.
 
 ## Motion
 
-Changements de couleur uniquement. Aucun reveal, lift, glow ou rebond.
+Colour changes only. No reveal, lift, glow, or bounce effects.
