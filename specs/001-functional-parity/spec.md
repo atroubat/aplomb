@@ -27,6 +27,8 @@ Rebuild BudgetFoyer in the new Aplomb project on a documented, maintainable foun
 - **FR-005** Existing SQLite data can be reused without manual re-entry.
 - **FR-006** The visual redesign does not replace ledgers with a new user journey.
 - **FR-007** The project can be deployed with Docker and a configurable Traefik router.
+- **FR-008** Updating an income creates a new effective-dated version; budgets before its effective month remain unchanged.
+- **FR-009** Savings transactions can be corrected after entry, including their date, amount, attribution, reason, and note.
 
 ## Out of Scope
 

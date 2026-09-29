@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TrendingUp } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Person, Account, Income } from '../../types';
 
@@ -6,11 +7,12 @@ interface Props {
   initial?: Partial<Income>;
   persons: Person[];
   accounts: Account[];
+  effectiveFrom?: string;
   onSubmit: (data: object) => Promise<void>;
   onCancel: () => void;
 }
 
-export function IncomeForm({ initial, persons, accounts, onSubmit, onCancel }: Props) {
+export function IncomeForm({ initial, persons, accounts, effectiveFrom: initialEffectiveFrom, onSubmit, onCancel }: Props) {
   const [personId, setPersonId] = useState(String(initial?.person_id || (persons[0]?.id ?? '')));
   const [label, setLabel] = useState(initial?.label || '');
   const [amount, setAmount] = useState(String(initial?.amount ?? ''));
@@ -18,6 +20,7 @@ export function IncomeForm({ initial, persons, accounts, onSubmit, onCancel }: P
   const [accountId, setAccountId] = useState(String(initial?.account_id ?? ''));
   const [isActive, setIsActive] = useState(initial?.is_active !== 0);
   const [isVariable, setIsVariable] = useState(!!initial?.is_variable);
+  const [effectiveFrom, setEffectiveFrom] = useState(initialEffectiveFrom ?? '');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,6 +33,7 @@ export function IncomeForm({ initial, persons, accounts, onSubmit, onCancel }: P
         accountId: accountId ? Number(accountId) : null,
         isActive: isActive ? 1 : 0,
         isVariable: isVariable ? 1 : 0,
+        ...(initial?.id ? { effectiveFrom } : {}),
       });
     } finally { setLoading(false); }
   };
@@ -79,6 +83,24 @@ export function IncomeForm({ initial, persons, accounts, onSubmit, onCancel }: P
           {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
       </div>
+      {initial?.id && (
+        <div className="rounded-xl border border-[var(--color-rule)] bg-[var(--color-accent-soft)] p-3">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1" htmlFor="income-effective-from">
+            Appliquer cette actualisation à partir de *
+          </label>
+          <input
+            id="income-effective-from"
+            type="month"
+            value={effectiveFrom}
+            onChange={e => setEffectiveFrom(e.target.value)}
+            required
+            className="input w-full"
+          />
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            Le revenu précédent est conservé jusqu’au mois précédent : les budgets passés restent inchangés.
+          </p>
+        </div>
+      )}
       <div className="flex gap-6">
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="rounded" />
@@ -87,7 +109,7 @@ export function IncomeForm({ initial, persons, accounts, onSubmit, onCancel }: P
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={isVariable} onChange={e => setIsVariable(e.target.checked)} className="rounded" />
           <span className="text-sm text-slate-700 dark:text-slate-300">
-            Revenu variable 📈
+            <><TrendingUp size={14} aria-hidden="true"/> Revenu variable</>
           </span>
         </label>
       </div>

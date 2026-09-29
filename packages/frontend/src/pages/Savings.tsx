@@ -338,13 +338,22 @@ function TransactionHistory({ savingsId, persons, isCommon, onEdit, onChanged }:
                   {tx.type === 'deposit' ? '+' : '-'}{formatCurrency(tx.amount)}
                 </span>
                 <button
+                  type="button"
+                  aria-label={`Modifier la transaction du ${formatDate(tx.date)}`}
+                  title="Modifier la transaction"
                   onClick={() => onEdit(tx)}
-                  className="text-slate-300 hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
                 >
-                  <Pencil size={11} />
+                  <Pencil size={15} />
                 </button>
-                <button onClick={() => handleDelete(tx.id)} className="text-slate-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
-                  <Trash2 size={11} />
+                <button
+                  type="button"
+                  aria-label={`Supprimer la transaction du ${formatDate(tx.date)}`}
+                  title="Supprimer la transaction"
+                  onClick={() => handleDelete(tx.id)}
+                  className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:hover:bg-red-500/10"
+                >
+                  <Trash2 size={15} />
                 </button>
               </div>
             </div>

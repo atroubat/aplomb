@@ -23,6 +23,10 @@ const OverrideSchema = z.object({
   note: z.string().optional().nullable(),
 });
 
+const IncomeRevisionSchema = IncomeSchema.extend({
+  effectiveFrom: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'effectiveFrom must use YYYY-MM'),
+});
+
 type IncomeRow = {
   id: number;
   person_id: number;
@@ -36,6 +40,16 @@ type IncomeRow = {
   end_date: string | null;
   created_at: string;
 };
+
+function firstDayOfMonth(yearMonth: string): string {
+  return `${yearMonth}-01`;
+}
+
+function lastDayOfPreviousMonth(yearMonth: string): string {
+  const [year, month] = yearMonth.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, 0));
+  return date.toISOString().slice(0, 10);
+}
 
 export async function incomesRoutes(app: FastifyInstance, db: Database.Database) {
   // ── INCOMES CRUD ──────────────────────────────────────────────────────────
@@ -72,6 +86,65 @@ export async function incomesRoutes(app: FastifyInstance, db: Database.Database)
     const set = fields.map(([k]) => `${colMap[k] || k} = ?`).join(', ');
     db.prepare(`UPDATE incomes SET ${set} WHERE id = ?`).run(...fields.map(([, v]) => v), Number(id));
     return db.prepare('SELECT * FROM incomes WHERE id = ?').get(Number(id));
+  });
+
+  /**
+   * Creates a new version of an income from a selected month onward.
+   * The preceding version is closed automatically, preserving all historical
+   * calculations instead of overwriting an amount that was true in the past.
+   */
+  app.post('/api/incomes/:id/revisions', async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const incomeId = Number(id);
+    const revision = IncomeRevisionSchema.parse(req.body);
+    const existing = db.prepare<[number], IncomeRow>('SELECT * FROM incomes WHERE id = ?').get(incomeId);
+    if (!existing) return reply.code(404).send({ error: 'Income not found' });
+
+    const effectiveDate = firstDayOfMonth(revision.effectiveFrom);
+    const existingStartMonth = existing.start_date?.slice(0, 7);
+    const existingEndMonth = existing.end_date?.slice(0, 7);
+
+    if (existingEndMonth && revision.effectiveFrom > existingEndMonth) {
+      return reply.code(400).send({ error: 'The selected effective month is after this income ends.' });
+    }
+
+    const fields = {
+      person_id: revision.personId,
+      label: revision.label,
+      amount: revision.amount,
+      frequency: revision.frequency,
+      account_id: revision.accountId ?? null,
+      is_active: revision.isActive,
+      is_variable: revision.isVariable,
+    };
+
+    // When the income has not started yet, there is no history to preserve.
+    if (existingStartMonth && revision.effectiveFrom <= existingStartMonth) {
+      db.prepare(`UPDATE incomes
+        SET person_id = ?, label = ?, amount = ?, frequency = ?, account_id = ?, is_active = ?, is_variable = ?
+        WHERE id = ?`
+      ).run(
+        fields.person_id, fields.label, fields.amount, fields.frequency, fields.account_id,
+        fields.is_active, fields.is_variable, incomeId,
+      );
+      return db.prepare('SELECT * FROM incomes WHERE id = ?').get(incomeId);
+    }
+
+    const createRevision = db.transaction(() => {
+      db.prepare('UPDATE incomes SET end_date = ? WHERE id = ?').run(
+        lastDayOfPreviousMonth(revision.effectiveFrom), incomeId,
+      );
+      const result = db.prepare(`INSERT INTO incomes
+        (person_id, label, amount, frequency, account_id, is_active, is_variable, start_date, end_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        fields.person_id, fields.label, fields.amount, fields.frequency, fields.account_id,
+        fields.is_active, fields.is_variable, effectiveDate, existing.end_date,
+      );
+      return db.prepare('SELECT * FROM incomes WHERE id = ?').get(result.lastInsertRowid);
+    });
+
+    return reply.code(201).send(createRevision());
   });
 
   app.delete('/api/incomes/:id', async (req, reply) => {

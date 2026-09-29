@@ -15,6 +15,17 @@ import { Person, Account, Income, IncomeOverride, EffectiveIncomeData } from '..
 
 const MONTH_SHORT = ['Jan','Fév','Mar','Avr','Mai','Jun','Jui','Aoû','Sep','Oct','Nov','Déc'];
 
+function toYearMonth(year: number, month: number) {
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+function isIncomeActiveInMonth(income: Income, year: number, month: number) {
+  if (!income.is_active) return false;
+  const selected = toYearMonth(year, month);
+  return (!income.start_date || selected >= income.start_date.slice(0, 7))
+    && (!income.end_date || selected <= income.end_date.slice(0, 7));
+}
+
 export default function Incomes() {
   const { year, month } = useFilters();
   const { showToast } = useToast();
@@ -34,7 +45,7 @@ export default function Incomes() {
 
   const handleSubmit = async (data: object) => {
     try {
-      if (editing) { await api.updateIncome(editing.id, data); showToast('Revenu mis à jour'); }
+      if (editing) { await api.reviseIncome(editing.id, data); showToast('Revenu actualisé — historique préservé'); }
       else { await api.createIncome(data); showToast('Revenu ajouté'); }
       setModalOpen(false); setEditing(null); refetchIncomes(); refetchEffective();
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
@@ -49,7 +60,8 @@ export default function Incomes() {
   const allIncomes = incomes || [];
   const allPersons = persons || [];
   const allAccounts = accounts || [];
-  const variableIncomeIds = allIncomes.filter(i => i.is_variable).map(i => i.id);
+  const activeIncomes = allIncomes.filter(income => isIncomeActiveInMonth(income, year, month));
+  const variableIncomeIds = activeIncomes.filter(i => i.is_variable).map(i => i.id);
 
   // Map incomeId -> effectiveAmount for the selected month (uses override if set, else base)
   const effectiveMap: Record<number, number> = {};
@@ -57,8 +69,8 @@ export default function Incomes() {
 
   const grouped = allPersons.map(p => ({
     person: p,
-    incomes: allIncomes.filter(i => i.person_id === p.id),
-    total: allIncomes.filter(i => i.person_id === p.id && i.is_active)
+    incomes: activeIncomes.filter(i => i.person_id === p.id),
+    total: activeIncomes.filter(i => i.person_id === p.id)
       .reduce((s, i) => s + (effectiveMap[i.id] ?? toMonthlyAmount(i.amount, i.frequency)), 0),
   }));
 
@@ -153,8 +165,15 @@ export default function Incomes() {
         </Card>
       )}
 
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} title={editing ? 'Modifier le revenu' : 'Ajouter un revenu'}>
-        <IncomeForm initial={editing || undefined} persons={allPersons} accounts={allAccounts} onSubmit={handleSubmit} onCancel={() => { setModalOpen(false); setEditing(null); }} />
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} title={editing ? 'Actualiser le revenu' : 'Ajouter un revenu'}>
+        <IncomeForm
+          initial={editing || undefined}
+          persons={allPersons}
+          accounts={allAccounts}
+          effectiveFrom={editing ? toYearMonth(year, month) : undefined}
+          onSubmit={handleSubmit}
+          onCancel={() => { setModalOpen(false); setEditing(null); }}
+        />
       </Modal>
 
       {overrideIncome && (

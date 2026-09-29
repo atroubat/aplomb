@@ -43,6 +43,7 @@ export const api = {
   },
   createIncome: (data: object) => request<import('../types').Income>('/incomes', { method: 'POST', body: JSON.stringify(data) }),
   updateIncome: (id: number, data: object) => request<import('../types').Income>(`/incomes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  reviseIncome: (id: number, data: object) => request<import('../types').Income>(`/incomes/${id}/revisions`, { method: 'POST', body: JSON.stringify(data) }),
   deleteIncome: (id: number) => request<void>(`/incomes/${id}`, { method: 'DELETE' }),
 
   // ── INCOME OVERRIDES ─────────────────────────────────────────────────────
