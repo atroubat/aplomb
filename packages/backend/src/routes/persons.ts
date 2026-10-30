@@ -6,6 +6,7 @@ const CreatePersonSchema = z.object({
   name: z.string().min(1),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   avatar: z.string().optional(),
+  role: z.enum(['adult', 'child']).optional(),
 });
 
 const UpdatePersonSchema = CreatePersonSchema.partial();
@@ -17,8 +18,8 @@ export async function personsRoutes(app: FastifyInstance, db: Database.Database)
 
   app.post('/api/persons', async (req, reply) => {
     const body = CreatePersonSchema.parse(req.body);
-    const stmt = db.prepare('INSERT INTO persons (name, color, avatar) VALUES (?, ?, ?)');
-    const result = stmt.run(body.name, body.color, body.avatar ?? null);
+    const stmt = db.prepare('INSERT INTO persons (name, color, avatar, role) VALUES (?, ?, ?, ?)');
+    const result = stmt.run(body.name, body.color, body.avatar ?? null, body.role ?? 'adult');
     return reply.code(201).send(db.prepare('SELECT * FROM persons WHERE id = ?').get(result.lastInsertRowid));
   });
 

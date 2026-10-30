@@ -24,8 +24,8 @@ function Delta({ value, invert = false }: { value: number; invert?: boolean }) {
 
 export default function Dashboard() {
   const { year, month, selectedPersonIds, setPersonIds } = useFilters();
-  const personId = selectedPersonIds.length === 1 ? selectedPersonIds[0] : undefined;
-  const { data: persons } = useApi<Person[]>(() => api.getPersons(), []);
+  const { data: persons } = useApi<Person[]>(() => api.getBudgetPersons(), []);
+  const personId = selectedPersonIds.length === 1 && persons?.some(p => p.id === selectedPersonIds[0]) ? selectedPersonIds[0] : undefined;
   const [method, setMethod] = useState<'75-15-10' | '50-30-20'>('50-30-20');
   const { data, loading } = useApi<DashboardData>(() => api.getDashboard({ year, month, person_id: personId, method }), [year, month, personId, method]);
 

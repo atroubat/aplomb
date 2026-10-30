@@ -30,7 +30,7 @@ export default function Incomes() {
   const { year, month } = useFilters();
   const { showToast } = useToast();
 
-  const { data: persons } = useApi<Person[]>(() => api.getPersons(), []);
+  const { data: persons } = useApi<Person[]>(() => api.getBudgetPersons(), []);
   const { data: accounts } = useApi<Account[]>(() => api.getAccounts(), []);
   const { data: incomes, refetch: refetchIncomes } = useApi<Income[]>(() => api.getIncomes(), []);
   const { data: effective, refetch: refetchEffective } = useApi<EffectiveIncomeData>(

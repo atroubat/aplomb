@@ -23,6 +23,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 export const api = {
   // ── PERSONS ──────────────────────────────────────────────────────────────
   getPersons: () => request<import('../types').Person[]>('/persons'),
+  getBudgetPersons: () => request<import('../types').Person[]>('/persons').then(persons => persons.filter(person => person.role !== 'child')),
   createPerson: (data: object) => request<import('../types').Person>('/persons', { method: 'POST', body: JSON.stringify(data) }),
   updatePerson: (id: number, data: object) => request<import('../types').Person>(`/persons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deletePerson: (id: number) => request<void>(`/persons/${id}`, { method: 'DELETE' }),
@@ -83,6 +84,8 @@ export const api = {
   deletePersonalCharge: (id: number) => request<void>(`/personal-charges/${id}`, { method: 'DELETE' }),
 
   // ── SAVINGS ───────────────────────────────────────────────────────────────
+  getSavingsEvolution: (year: number, month: number) =>
+    request<Array<{ month: string; total: number }>>(`/savings/evolution?year=${year}&month=${month}`),
   getSavings: (params?: { person_id?: number; common?: boolean }) => {
     const p = new URLSearchParams();
     if (params?.person_id) p.set('person_id', String(params.person_id));

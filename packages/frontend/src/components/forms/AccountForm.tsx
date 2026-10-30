@@ -50,7 +50,7 @@ export function AccountForm({ initial, persons, onSubmit, onCancel }: Props) {
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Personne</label>
           <select value={personId} onChange={e => setPersonId(e.target.value)} className="input w-full">
             <option value="">Commun</option>
-            {persons.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {persons.map(p => <option key={p.id} value={p.id}>{p.name}{p.role === 'child' ? ' (enfant)' : ''}</option>)}
           </select>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import Database from 'better-sqlite3';
 import { z } from 'zod';
+import { getSavingsEvolution } from '../utils/budget-scope.js';
 
 const SavingsSchema = z.object({
   label: z.string().min(1),
@@ -22,6 +23,7 @@ const TransactionSchema = z.object({
   reason: z.string().optional().nullable(),
   note: z.string().optional().nullable(),
   personId: z.number().int().positive().optional().nullable(),
+  isExcludedFromBudget: z.number().int().min(0).max(1).optional(),
 });
 
 function getBalance(db: Database.Database, savingsId: number): number {
@@ -33,6 +35,15 @@ function getBalance(db: Database.Database, savingsId: number): number {
 }
 
 export async function savingsRoutes(app: FastifyInstance, db: Database.Database) {
+  app.get('/api/savings/evolution', async (req) => {
+    const now = new Date();
+    const { year, month } = z.object({
+      year: z.coerce.number().int().min(2000).max(2100).default(now.getFullYear()),
+      month: z.coerce.number().int().min(1).max(12).default(now.getMonth() + 1),
+    }).parse(req.query);
+    return getSavingsEvolution(db, year, month, undefined, true);
+  });
+
   app.get('/api/savings', async (req) => {
     const { person_id, common } = req.query as { person_id?: string; common?: string };
     let rows: Array<{ id: number }>;
@@ -131,8 +142,8 @@ export async function savingsRoutes(app: FastifyInstance, db: Database.Database)
       }
     }
     const result = db.prepare(
-      'INSERT INTO savings_transactions (savings_id, type, amount, date, reason, note, person_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).run(Number(id), b.type, b.amount, b.date, b.reason ?? null, b.note ?? null, b.personId ?? null);
+      'INSERT INTO savings_transactions (savings_id, type, amount, date, reason, note, person_id, is_excluded_from_budget) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(Number(id), b.type, b.amount, b.date, b.reason ?? null, b.note ?? null, b.personId ?? null, b.isExcludedFromBudget ?? 0);
     return reply.code(201).send(
       db.prepare('SELECT * FROM savings_transactions WHERE id = ?').get(result.lastInsertRowid)
     );
@@ -156,7 +167,7 @@ export async function savingsRoutes(app: FastifyInstance, db: Database.Database)
         }
       }
     }
-    const colMap: Record<string, string> = { personId: 'person_id' };
+    const colMap: Record<string, string> = { personId: 'person_id', isExcludedFromBudget: 'is_excluded_from_budget' };
     const fields = Object.entries(b).filter(([, v]) => v !== undefined);
     if (fields.length > 0) {
       const set = fields.map(([k]) => `${colMap[k] || k} = ?`).join(', ');

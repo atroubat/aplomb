@@ -3,6 +3,7 @@ import Database from 'better-sqlite3';
 import { z } from 'zod';
 import { toMonthlyAmount, getEffectiveMonthlyIncome, getMissingVariableIncomeIds } from '../utils/monthly-calc.js';
 import { isActiveInMonth } from '../utils/monthly-calc.js';
+import { BUDGET_PERSON_IDS } from '../utils/budget-scope.js';
 
 const IncomeSchema = z.object({
   personId: z.number().int().positive(),
@@ -231,7 +232,7 @@ export async function incomesRoutes(app: FastifyInstance, db: Database.Database)
     }
 
     const pid = person_id ? Number(person_id) : undefined;
-    const allIncomes = db.prepare<[], IncomeRow>('SELECT * FROM incomes WHERE is_active = 1').all();
+    const allIncomes = db.prepare<[], IncomeRow>(`SELECT * FROM incomes WHERE is_active = 1 AND person_id IN (${BUDGET_PERSON_IDS})`).all();
     const history: Array<{ year: number; month: number; person_id?: number; total: number }> = [];
 
     let cy = yFrom; let cm = mFrom;
@@ -270,10 +271,10 @@ export async function incomesRoutes(app: FastifyInstance, db: Database.Database)
     let incomes: IncomeRow[];
     if (person_id) {
       incomes = db.prepare<[number], IncomeRow>(
-        'SELECT * FROM incomes WHERE person_id = ? AND is_active = 1'
+        `SELECT * FROM incomes WHERE person_id = ? AND is_active = 1 AND person_id IN (${BUDGET_PERSON_IDS})`
       ).all(Number(person_id));
     } else {
-      incomes = db.prepare<[], IncomeRow>('SELECT * FROM incomes WHERE is_active = 1').all();
+      incomes = db.prepare<[], IncomeRow>(`SELECT * FROM incomes WHERE is_active = 1 AND person_id IN (${BUDGET_PERSON_IDS})`).all();
     }
 
     // Filter to active in month

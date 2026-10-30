@@ -32,10 +32,10 @@ function StatusIcon({ status }: { status: string }) {
 export default function Advice() {
   const [method, setMethod] = useState<Method>('50-30-20');
   const { year, month, selectedPersonIds, setPersonIds } = useFilters();
-  const { data: persons } = useApi<Person[]>(() => api.getPersons(), []);
+  const { data: persons } = useApi<Person[]>(() => api.getBudgetPersons(), []);
 
   // person_id is required for advice — use the first selected person
-  const selectedPersonId = selectedPersonIds.length === 1 ? selectedPersonIds[0] : null;
+  const selectedPersonId = selectedPersonIds.length === 1 && persons?.some(p => p.id === selectedPersonIds[0]) ? selectedPersonIds[0] : null;
 
   const { data: advice, loading } = useApi(
     () => selectedPersonId

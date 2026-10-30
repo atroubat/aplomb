@@ -111,8 +111,9 @@ export function SavingsForm({ initial, persons, accounts, onSubmit, onCancel }: 
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Titulaire *</label>
           <select value={personId} onChange={e => setPersonId(e.target.value)} required className="input w-full">
-            {persons.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {persons.map(p => <option key={p.id} value={p.id}>{p.name}{p.role === 'child' ? ' (enfant)' : ''}</option>)}
           </select>
+          {persons.find(p => p.id === Number(personId))?.role === 'child' && <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Ce livret reste visible dans Épargne, mais ses versements et son objectif sont exclus du budget du foyer et des conseils.</p>}
         </div>
       )}
 

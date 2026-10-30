@@ -5,7 +5,7 @@ import { Check } from 'lucide-react';
 
 interface Props {
   initial?: Partial<Person>;
-  onSubmit: (data: { name: string; color: string; avatar?: string }) => Promise<void>;
+  onSubmit: (data: { name: string; color: string; role: Person['role']; avatar?: string }) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -22,13 +22,14 @@ const COLORS = [
 export function PersonForm({ initial, onSubmit, onCancel }: Props) {
   const [name, setName] = useState(initial?.name || '');
   const [color, setColor] = useState(initial?.color || COLORS[0].value);
+  const [role, setRole] = useState<Person['role']>(initial?.role ?? 'adult');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     setLoading(true);
-    try { await onSubmit({ name: name.trim(), color }); }
+    try { await onSubmit({ name: name.trim(), color, role }); }
     finally { setLoading(false); }
   };
 
@@ -37,6 +38,14 @@ export function PersonForm({ initial, onSubmit, onCancel }: Props) {
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nom *</label>
         <input value={name} onChange={e => setName(e.target.value)} required className="input w-full" placeholder="Ex: Marie" />
+      </div>
+      <div>
+        <label htmlFor="person-role" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Profil</label>
+        <select id="person-role" value={role} onChange={e => setRole(e.target.value as Person['role'])} className="input w-full" aria-describedby="person-role-help">
+          <option value="adult">Adulte — participe au budget</option>
+          <option value="child">Enfant — hors budget</option>
+        </select>
+        <p id="person-role-help" className="text-sm text-slate-500 dark:text-slate-400 mt-2">Un enfant peut avoir ses comptes et livrets, sans entrer dans les calculs du budget ni les conseils.</p>
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Couleur</label>

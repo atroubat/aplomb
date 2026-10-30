@@ -3,6 +3,7 @@ export interface Person {
   name: string;
   color: string;
   avatar: string | null;
+  role: 'adult' | 'child';
   created_at?: string;
 }
 
@@ -96,6 +97,7 @@ export interface SavingsTransaction {
   reason: string | null;
   note: string | null;
   person_id: number | null;
+  is_excluded_from_budget: number;
   created_at?: string;
 }
 

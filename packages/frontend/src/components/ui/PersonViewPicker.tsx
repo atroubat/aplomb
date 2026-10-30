@@ -27,7 +27,7 @@ export function PersonViewPicker({
       >
         {allowHousehold && <option value="">Foyer</option>}
         {!allowHousehold && <option value="" disabled>Choisir une personne</option>}
-        {persons.map(person => <option key={person.id} value={person.id}>{person.name}</option>)}
+        {persons.filter(person => person.role !== 'child').map(person => <option key={person.id} value={person.id}>{person.name}</option>)}
       </select>
     </div>
   );

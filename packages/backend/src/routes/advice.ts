@@ -3,6 +3,7 @@ import Database from 'better-sqlite3';
 import { toMonthlyAmount, getEffectiveMonthlyIncome, isActiveInMonth, getChargeAmountForMonth, getPersonMonthSavings } from '../utils/monthly-calc.js';
 import { computeAdvice, BudgetMethod } from '../utils/budget-methods.js';
 import { round2 } from '../utils/money.js';
+import { BUDGET_PERSON_IDS, isBudgetPerson } from '../utils/budget-scope.js';
 
 type Frequency = 'monthly' | 'quarterly' | 'yearly';
 type IncomeRow = {
@@ -40,9 +41,10 @@ export async function adviceRoutes(app: FastifyInstance, db: Database.Database) 
     const budgetMethod: BudgetMethod = (method === '75-15-10' ? '75-15-10' : '50-30-20');
     const pid = Number(person_id);
     if (isNaN(pid)) return reply.code(400).send({ error: 'person_id invalide.' });
+    if (!isBudgetPerson(db, pid)) return reply.code(400).send({ error: 'Les conseils sont réservés aux adultes du foyer.' });
 
     // ── EFFECTIVE PERSONAL INCOME ──────────────────────────────────────────
-    const allIncomes = db.prepare<[], IncomeRow>('SELECT * FROM incomes WHERE is_active = 1').all();
+    const allIncomes = db.prepare<[], IncomeRow>(`SELECT * FROM incomes WHERE is_active = 1 AND person_id IN (${BUDGET_PERSON_IDS})`).all();
     const allPersonIncomes = allIncomes.filter(r => r.person_id === pid && isActive(r, y, m));
     const personalIncome = allPersonIncomes.reduce(
       (sum, r) => sum + getEffectiveMonthlyIncome(db, r, y, m), 0

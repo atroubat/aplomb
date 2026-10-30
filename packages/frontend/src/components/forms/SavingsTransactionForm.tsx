@@ -29,6 +29,7 @@ export function SavingsTransactionForm({ type, balance, persons, isCommon, defau
     return WITHDRAWAL_REASONS.includes(initial.reason) ? '' : initial.reason;
   });
   const [note, setNote] = useState(initial?.note ?? '');
+  const [excludedFromBudget, setExcludedFromBudget] = useState(!!initial?.is_excluded_from_budget);
   const [personId, setPersonId] = useState<string>(() => {
     if (initial?.person_id) return String(initial.person_id);
     if (!isCommon && defaultPersonId) return String(defaultPersonId);
@@ -57,6 +58,7 @@ export function SavingsTransactionForm({ type, balance, persons, isCommon, defau
         reason: effectiveType === 'withdrawal' ? (reason === 'Autre' ? customReason : reason) || null : null,
         note: note || null,
         personId: personId ? Number(personId) : null,
+        isExcludedFromBudget: excludedFromBudget ? 1 : 0,
       });
     } finally { setLoading(false); }
   };
@@ -133,6 +135,16 @@ export function SavingsTransactionForm({ type, balance, persons, isCommon, defau
             <input value={customReason} onChange={e => setCustomReason(e.target.value)} className="input w-full mt-2" placeholder="Préciser le motif..." />
           )}
         </div>
+      )}
+
+      {effectiveType === 'deposit' && (
+        <label className="flex items-start gap-3 rounded-xl border border-slate-200 dark:border-slate-600 p-3 cursor-pointer">
+          <input type="checkbox" checked={excludedFromBudget} onChange={e => setExcludedFromBudget(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-[var(--color-accent)]" aria-describedby="savings-budget-help" />
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">Hors budget</span>
+            <span id="savings-budget-help" className="block text-sm text-slate-500 dark:text-slate-400 mt-1">Don, cadeau ou cas particulier : augmente le solde du livret sans être déduit du budget du mois ni compté dans les conseils.</span>
+          </span>
+        </label>
       )}
 
       <div>

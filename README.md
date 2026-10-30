@@ -16,6 +16,8 @@ It focuses on planning rather than bank-account tracking. Aplomb supports househ
 - Fixed, variable, and temporary monthly income
 - Shared and personal recurring expenses
 - Savings accounts, balances, deposits, withdrawals, and monthly goals
+- Child profiles with their own accounts and savings, excluded from budgeting and advice
+- Optional off-budget savings deposits for gifts or exceptional funds
 - 50/30/20 and 75/15/10 planning guidance
 - Demo mode with isolated sample data
 - JSON backup and restore
@@ -34,6 +36,14 @@ The main application is organized around five areas:
 5. **Advice** — planning guidance based on the selected household member and budget method.
 
 The functional specification, data model, API contract, and implementation plan are available in [`specs/001-functional-parity`](specs/001-functional-parity).
+
+### Children and off-budget savings
+
+In **Settings → People**, choose the **Child** profile when adding or editing a household member. Children remain available as account and savings owners, but do not appear in income, expense, budget-view or advice selectors. Their savings are visible in the Savings page, including its total balance and history, but excluded from dashboard budget calculations and history.
+
+For a gift or exceptional deposit, enable **Off budget** in the savings deposit form (French UI: **Hors budget**). This option is also editable in transaction history. The money still increases the product balance and remains visible in balance history; it does not consume monthly income, count towards monthly savings contributions, or affect budgeting advice. Existing people remain adults and existing deposits remain budgeted unless explicitly changed.
+
+See [`specs/002-children-and-off-budget-savings`](specs/002-children-and-off-budget-savings) for the extension specification.
 
 ## Technology
 

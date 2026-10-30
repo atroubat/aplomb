@@ -173,9 +173,10 @@ function PersonsSection({ persons, onRefetch, showToast }: { persons: Person[]; 
         <div className="space-y-2">
           {persons.map(p => (
             <div key={p.id} className="settings-register-row">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-wrap">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${p.color}20`, border: `2px solid ${p.color}` }}><UserRound size={17}/></div>
                 <span className="font-medium text-slate-800 dark:text-slate-200">{p.name}</span>
+                {p.role === 'child' && <span className="text-xs text-slate-500 dark:text-slate-400">Enfant · hors budget</span>}
                 <span className="w-4 h-4 rounded-full" style={{ backgroundColor: p.color }} />
               </div>
               <div className="flex gap-1">

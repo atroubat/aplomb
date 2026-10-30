@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3';
+import { BUDGET_DEPOSIT_FILTER, BUDGET_PERSON_IDS, isBudgetPerson } from './budget-scope.js';
 
 export type Frequency = 'monthly' | 'quarterly' | 'yearly';
 
@@ -100,6 +101,7 @@ export function getPersonMonthSavings(
   personId: number,
   _proRataRatio: number,
 ): number {
+  if (!isBudgetPerson(db, personId)) return 0;
   const start = `${year}-${String(month).padStart(2, '0')}-01`;
   const end   = `${year}-${String(month).padStart(2, '0')}-31`;
 
@@ -113,7 +115,7 @@ export function getPersonMonthSavings(
     const ph = personalIds.map(() => '?').join(',');
     personal = (db.prepare<unknown[], { total: number }>(`
       SELECT COALESCE(SUM(CASE WHEN type='deposit' THEN amount ELSE 0 END), 0) as total
-      FROM savings_transactions WHERE savings_id IN (${ph}) AND date >= ? AND date <= ?
+      FROM savings_transactions WHERE ${BUDGET_DEPOSIT_FILTER} AND savings_id IN (${ph}) AND date >= ? AND date <= ?
     `).get(...personalIds, start, end))?.total ?? 0;
   }
 
@@ -129,7 +131,7 @@ export function getPersonMonthSavings(
     commonAttributed = (db.prepare<unknown[], { total: number }>(`
       SELECT COALESCE(SUM(CASE WHEN type='deposit' THEN amount ELSE 0 END), 0) as total
       FROM savings_transactions
-      WHERE savings_id IN (${ph}) AND person_id = ? AND date >= ? AND date <= ?
+      WHERE ${BUDGET_DEPOSIT_FILTER} AND savings_id IN (${ph}) AND person_id = ? AND date >= ? AND date <= ?
     `).get(...commonIds, personId, start, end))?.total ?? 0;
 
   }
@@ -151,7 +153,8 @@ export function getMissingVariableIncomeIds(
      FROM incomes i
      LEFT JOIN income_overrides o
        ON o.income_id = i.id AND o.year = ? AND o.month = ?
-     WHERE i.is_variable = 1 AND i.is_active = 1 AND o.id IS NULL`
+     WHERE i.is_variable = 1 AND i.is_active = 1 AND o.id IS NULL
+       AND i.person_id IN (${BUDGET_PERSON_IDS})`
   ).all(year, month);
   return rows.map(r => r.id);
 }

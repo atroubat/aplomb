@@ -73,7 +73,7 @@ function ChargeCard({ charge: c, accountName, activeInSelectedMonth, statusLabel
 export default function PersonalCharges() {
   const { showToast } = useToast();
   const { year, month } = useFilters();
-  const { data: persons } = useApi<Person[]>(() => api.getPersons(), []);
+  const { data: persons } = useApi<Person[]>(() => api.getBudgetPersons(), []);
   const { data: accounts } = useApi(() => api.getAccounts(), []);
   const [activePersonId, setActivePersonId] = useState<number | null>(null);
 

@@ -14,14 +14,14 @@ import { SavingsForm } from '../components/forms/SavingsForm';
 import { SavingsTransactionForm } from '../components/forms/SavingsTransactionForm';
 import { SavingsLineChart } from '../components/charts/SavingsLineChart';
 import { formatCurrency, formatDate, savingsTypeLabels } from '../lib/formatters';
-import { DashboardData, Savings, SavingsTransaction, Person } from '../types';
+import { Savings, SavingsTransaction, Person } from '../types';
 
 export default function SavingsPage() {
   const { showToast } = useToast();
   const { year, month } = useFilters();
   const { data: savingsList, loading, refetch } = useApi(() => api.getSavings(), []);
-  const { data: dashboard, refetch: refetchEvolution } = useApi<DashboardData>(
-    () => api.getDashboard({ year, month }),
+  const { data: evolution, refetch: refetchEvolution } = useApi(
+    () => api.getSavingsEvolution(year, month),
     [year, month]
   );
   const { data: persons } = useApi<Person[]>(() => api.getPersons(), []);
@@ -33,13 +33,14 @@ export default function SavingsPage() {
   const [txModal, setTxModal] = useState<{ savings: Savings; type: 'deposit' | 'withdrawal' } | null>(null);
   const [editingTx, setEditingTx] = useState<{ tx: SavingsTransaction; savings: Savings } | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [transactionRevision, setTransactionRevision] = useState(0);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const handleSavingsSubmit = async (data: object) => {
     try {
       if (editing) { await api.updateSavings(editing.id, data); showToast('Épargne mise à jour'); }
       else { await api.createSavings(data); showToast('Produit d\'épargne créé'); }
-      setModalOpen(false); refetch();
+      setModalOpen(false); refetch(); refetchEvolution();
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
   };
 
@@ -48,7 +49,7 @@ export default function SavingsPage() {
     try {
       await api.createSavingsTransaction(txModal.savings.id, data);
       showToast(txModal.type === 'deposit' ? 'Versement enregistré !' : 'Retrait enregistré !');
-      setTxModal(null); refetch(); refetchEvolution();
+      setTxModal(null); refetch(); refetchEvolution(); setTransactionRevision(v => v + 1);
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
   };
 
@@ -57,7 +58,7 @@ export default function SavingsPage() {
     try {
       await api.updateSavingsTransaction(editingTx.tx.id, data);
       showToast('Transaction mise à jour');
-      setEditingTx(null); refetch(); refetchEvolution();
+      setEditingTx(null); refetch(); refetchEvolution(); setTransactionRevision(v => v + 1);
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
   };
 
@@ -73,8 +74,6 @@ export default function SavingsPage() {
   const personalSavings = (savingsList || []).filter(s => !s.is_common);
   const total = (savingsList || []).reduce((s, sv) => s + sv.balance, 0);
 
-  const evolution = dashboard?.savings_evolution || [];
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -86,6 +85,7 @@ export default function SavingsPage() {
       <Card className="savings-summary">
         <p className="text-sm font-medium">Épargne totale</p>
         <p className="savings-summary-value">{formatCurrency(total)}</p>
+        {persons?.some(p => p.role === 'child') && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tous les livrets, y compris ceux des enfants. Le budget du foyer reste séparé.</p>}
         <div className="savings-summary-split flex gap-4 text-sm mt-2">
           <span><House size={15}/> Commun : {formatCurrency(commonSavings.reduce((s, sv) => s + sv.balance, 0))}</span>
           <span><UserRound size={15}/> Personnel : {formatCurrency(personalSavings.reduce((s, sv) => s + sv.balance, 0))}</span>
@@ -99,7 +99,7 @@ export default function SavingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {commonSavings.map(sv => (
               <SavingsCard
-                key={sv.id}
+                key={`${sv.id}-${transactionRevision}`}
                 sv={sv}
                 persons={persons || []}
                 expanded={expandedId === sv.id}
@@ -109,7 +109,7 @@ export default function SavingsPage() {
                 onDeposit={() => setTxModal({ savings: sv, type: 'deposit' })}
                 onWithdraw={() => setTxModal({ savings: sv, type: 'withdrawal' })}
                 onEditTx={tx => setEditingTx({ tx, savings: sv })}
-                onTransactionsChanged={refetchEvolution}
+                onTransactionsChanged={() => { refetch(); refetchEvolution(); }}
               />
             ))}
           </div>
@@ -131,7 +131,7 @@ export default function SavingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {personalSavings.map(sv => (
               <SavingsCard
-                key={sv.id}
+                key={`${sv.id}-${transactionRevision}`}
                 sv={sv}
                 persons={persons || []}
                 expanded={expandedId === sv.id}
@@ -141,7 +141,7 @@ export default function SavingsPage() {
                 onDeposit={() => setTxModal({ savings: sv, type: 'deposit' })}
                 onWithdraw={() => setTxModal({ savings: sv, type: 'withdrawal' })}
                 onEditTx={tx => setEditingTx({ tx, savings: sv })}
-                onTransactionsChanged={refetchEvolution}
+                onTransactionsChanged={() => { refetch(); refetchEvolution(); }}
               />
             ))}
           </div>
@@ -153,7 +153,7 @@ export default function SavingsPage() {
         <Card className="savings-evolution-card">
           <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-4">Évolution de l'épargne</h2>
           <div className="savings-chart-frame">
-            <SavingsLineChart data={evolution} />
+            <SavingsLineChart data={evolution || []} />
           </div>
         </Card>
       )}
@@ -240,6 +240,7 @@ function SavingsCard({ sv, persons, expanded, onExpand, onEdit, onDelete, onDepo
                 Hébergé chez {hostedBy.name}
               </p>
             )}
+            {owner?.role === 'child' && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Livret enfant · hors budget</p>}
           </div>
           <div className="flex gap-1 flex-shrink-0">
             <Button variant="ghost" size="sm" icon={<Pencil size={13} />} onClick={onEdit} />
@@ -330,6 +331,7 @@ function TransactionHistory({ savingsId, persons, isCommon, onEdit, onChanged }:
                     <House size={11}/> Foyer
                   </span>
                 )}
+                {!!tx.is_excluded_from_budget && <span className="text-xs text-slate-500 dark:text-slate-400">Hors budget</span>}
                 {tx.reason && <span className="text-xs text-slate-400 truncate">({tx.reason})</span>}
                 {tx.note && !tx.reason && <span className="text-xs text-slate-400 truncate">{tx.note}</span>}
               </div>

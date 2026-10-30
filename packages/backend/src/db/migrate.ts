@@ -113,6 +113,8 @@ export function runMigrations(db: Database.Database): void {
   addColumnIfMissing('accounts', 'iban', 'TEXT');
   // Person who made the savings transaction (for common savings breakdown)
   addColumnIfMissing('savings_transactions', 'person_id', 'INTEGER REFERENCES persons(id)');
+  addColumnIfMissing('persons', 'role', "TEXT NOT NULL DEFAULT 'adult' CHECK(role IN ('adult', 'child'))");
+  addColumnIfMissing('savings_transactions', 'is_excluded_from_budget', 'INTEGER NOT NULL DEFAULT 0 CHECK(is_excluded_from_budget IN (0, 1))');
 
   // ── NEW TABLES (idempotent CREATE IF NOT EXISTS) ────────────────────────
 

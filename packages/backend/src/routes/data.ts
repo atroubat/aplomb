@@ -15,13 +15,13 @@ import Database from 'better-sqlite3';
  * Keeping every table here means export/import/reset can never silently drop a table again.
  */
 const TABLES = [
-  { key: 'persons',             table: 'persons',              columns: ['id', 'name', 'color', 'avatar', 'created_at'] },
+  { key: 'persons',             table: 'persons',              columns: ['id', 'name', 'color', 'avatar', 'role', 'created_at'] },
   { key: 'accounts',            table: 'accounts',             columns: ['id', 'name', 'type', 'person_id', 'initial_balance', 'icon', 'iban', 'created_at'] },
   { key: 'incomes',             table: 'incomes',              columns: ['id', 'person_id', 'label', 'amount', 'frequency', 'account_id', 'is_active', 'is_variable', 'start_date', 'end_date', 'created_at'] },
   { key: 'fixedCharges',        table: 'fixed_charges',        columns: ['id', 'label', 'amount', 'category', 'frequency', 'account_id', 'is_active', 'is_smoothed', 'start_date', 'end_date', 'created_at'] },
   { key: 'personalCharges',     table: 'personal_charges',     columns: ['id', 'person_id', 'label', 'amount', 'category', 'frequency', 'account_id', 'is_active', 'start_date', 'end_date', 'created_at'] },
   { key: 'savings',             table: 'savings',              columns: ['id', 'label', 'type', 'target_amount', 'target_date', 'account_id', 'person_id', 'is_common', 'hosted_by_person_id', 'created_at'] },
-  { key: 'savingsTransactions', table: 'savings_transactions', columns: ['id', 'savings_id', 'type', 'amount', 'date', 'reason', 'note', 'person_id', 'created_at'] },
+  { key: 'savingsTransactions', table: 'savings_transactions', columns: ['id', 'savings_id', 'type', 'amount', 'date', 'reason', 'note', 'person_id', 'is_excluded_from_budget', 'created_at'] },
   { key: 'incomeOverrides',     table: 'income_overrides',     columns: ['id', 'income_id', 'year', 'month', 'amount', 'note', 'created_at'] },
   { key: 'transfers',           table: 'transfers',            columns: ['id', 'from_account_id', 'to_account_id', 'amount', 'date', 'label', 'note', 'created_at'] },
   { key: 'actualExpenses',      table: 'actual_expenses',      columns: ['id', 'person_id', 'category', 'amount', 'year', 'month', 'label', 'note', 'created_at'] },
@@ -76,7 +76,7 @@ export async function dataRoutes(app: FastifyInstance, db: Database.Database) {
             if (!row || typeof row !== 'object') {
               throw new Error(`Ligne invalide dans « ${key} ».`);
             }
-            stmt.run(...columns.map((c) => row[c] ?? null));
+            stmt.run(...columns.map((c) => row[c] ?? (c === 'role' ? 'adult' : c === 'is_excluded_from_budget' ? 0 : null)));
           }
         }
       });

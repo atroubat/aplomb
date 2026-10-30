@@ -36,6 +36,7 @@ export const PersonSchema = z.object({
   name: z.string().min(1),
   color: z.string().min(1),
   avatar: z.string().optional().nullable(),
+  role: z.enum(['adult', 'child']).default('adult'),
 });
 
 export const AccountSchema = z.object({
@@ -107,6 +108,8 @@ export const SavingsTransactionSchema = z.object({
   date: z.string(),
   reason: z.string().optional().nullable(),
   note: z.string().optional().nullable(),
+  personId: z.number().int().positive().optional().nullable(),
+  isExcludedFromBudget: z.number().int().min(0).max(1).default(0),
 });
 
 export const TransferSchema = z.object({

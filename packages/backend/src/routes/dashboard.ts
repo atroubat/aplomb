@@ -3,6 +3,7 @@ import Database from 'better-sqlite3';
 import { toMonthlyAmount, getEffectiveMonthlyIncome, getMissingVariableIncomeIds, isActiveInMonth, getChargeAmountForMonth, getPersonMonthSavings } from '../utils/monthly-calc.js';
 import { computeHouseholdSplit } from '../utils/household-split.js';
 import { round2 } from '../utils/money.js';
+import { BUDGET_PERSON_IDS, BUDGET_SAVINGS_IDS, BUDGET_DEPOSIT_FILTER, isBudgetPerson, getSavingsEvolution } from '../utils/budget-scope.js';
 
 type Frequency = 'monthly' | 'quarterly' | 'yearly';
 
@@ -33,7 +34,7 @@ function isActive(row: { is_active: number; start_date: string | null; end_date:
 }
 
 function getEffectiveIncomeForMonth(db: Database.Database, year: number, month: number, personId?: number): number {
-  const rows = db.prepare<[], IncomeRow>('SELECT * FROM incomes WHERE is_active = 1').all();
+  const rows = db.prepare<[], IncomeRow>(`SELECT * FROM incomes WHERE is_active = 1 AND person_id IN (${BUDGET_PERSON_IDS})`).all();
   const filtered = personId ? rows.filter(r => r.person_id === personId) : rows;
   return filtered
     .filter(r => isActive(r, year, month))
@@ -48,7 +49,7 @@ function getMonthFixedCharges(db: Database.Database, year: number, month: number
 }
 
 function getMonthPersonalCharges(db: Database.Database, year: number, month: number, personId?: number): number {
-  const rows = db.prepare<[], ChargeRow>('SELECT * FROM personal_charges WHERE is_active = 1').all();
+  const rows = db.prepare<[], ChargeRow>(`SELECT * FROM personal_charges WHERE is_active = 1 AND person_id IN (${BUDGET_PERSON_IDS})`).all();
   const filtered = personId ? rows.filter(r => r.person_id === personId) : rows;
   return filtered
     .filter(r => isActive(r, year, month))
@@ -75,7 +76,7 @@ function getMonthSavings(db: Database.Database, year: number, month: number, isC
   const placeholders = savingsIds.map(() => '?').join(',');
   const row = db.prepare<unknown[], { total: number }>(`
     SELECT COALESCE(SUM(CASE WHEN type='deposit' THEN amount ELSE 0 END), 0) as total
-    FROM savings_transactions WHERE savings_id IN (${placeholders}) AND date >= ? AND date <= ?
+    FROM savings_transactions WHERE ${BUDGET_DEPOSIT_FILTER} AND savings_id IN (${placeholders}) AND date >= ? AND date <= ?
   `).get(...savingsIds, start, end);
   return row?.total ?? 0;
 }
@@ -93,6 +94,7 @@ export async function dashboardRoutes(app: FastifyInstance, db: Database.Databas
     if (person_id && isNaN(pid as number)) {
       return reply.code(400).send({ error: 'person_id invalide.' });
     }
+    if (pid && !isBudgetPerson(db, pid)) return reply.code(400).send({ error: 'La vue budget est réservée aux adultes du foyer.' });
 
     // Determine view mode
     const isPersonalView = !!pid;
@@ -131,7 +133,7 @@ export async function dashboardRoutes(app: FastifyInstance, db: Database.Databas
     const remaining = (isPersonalView ? personalIncome : totalHouseholdIncome) - totalCharges - personalSavingsKpi;
 
     // ── HOUSEHOLD SPLIT ────────────────────────────────────────────────────
-    const allPersons = db.prepare<[], { id: number; name: string; color: string; avatar: string | null }>('SELECT id, name, color, avatar FROM persons').all();
+    const allPersons = db.prepare<[], { id: number; name: string; color: string; avatar: string | null }>("SELECT id, name, color, avatar FROM persons WHERE role = 'adult'").all();
     const allIncomes = db.prepare<[], IncomeRow>('SELECT * FROM incomes WHERE is_active = 1').all();
 
     const personsWithIncome = allPersons.map(p => {
@@ -161,7 +163,7 @@ export async function dashboardRoutes(app: FastifyInstance, db: Database.Databas
     // ── EXPENSES BY CATEGORY ───────────────────────────────────────────────
     const fixedRows = db.prepare<[], ChargeRow>('SELECT * FROM fixed_charges WHERE is_active = 1').all()
       .filter(r => isActive(r, y, m));
-    const personalRows = db.prepare<[], ChargeRow>('SELECT * FROM personal_charges WHERE is_active = 1').all()
+    const personalRows = db.prepare<[], ChargeRow>(`SELECT * FROM personal_charges WHERE is_active = 1 AND person_id IN (${BUDGET_PERSON_IDS})`).all()
       .filter(r => isActive(r, y, m) && (!pid || r.person_id === pid));
 
     const catMap: Record<string, number> = {};
@@ -205,37 +207,7 @@ export async function dashboardRoutes(app: FastifyInstance, db: Database.Databas
     }
 
     // ── SAVINGS EVOLUTION (12 months) ─────────────────────────────────────
-    const savingsEvolution = [];
-    for (let i = 11; i >= 0; i--) {
-      let cm = m - i; let cy = y;
-      while (cm <= 0) { cm += 12; cy--; }
-      const endDate = `${cy}-${String(cm).padStart(2, '0')}-31`;
-      let total: number;
-      if (isPersonalView && pid) {
-        // Personal history: only products owned by this person. Contributions to
-        // common savings are deliberately excluded from this chart.
-        const row = db.prepare<[string, number], { total: number }>(`
-          SELECT COALESCE(SUM(CASE WHEN type='deposit' THEN amount ELSE -amount END), 0) as total
-          FROM savings_transactions
-          WHERE date <= ? AND (
-            savings_id IN (
-              SELECT id FROM savings
-              WHERE person_id = ? AND (is_common = 0 OR is_common IS NULL)
-            )
-          )
-        `).get(endDate, pid);
-        total = row?.total ?? 0;
-      } else {
-        // Household history includes every personal and common savings product.
-        const row = db.prepare<[string], { total: number }>(`
-          SELECT COALESCE(SUM(CASE WHEN type='deposit' THEN amount ELSE -amount END), 0) as total
-          FROM savings_transactions
-          WHERE date <= ?
-        `).get(endDate);
-        total = row?.total ?? 0;
-      }
-      savingsEvolution.push({ month: monthStr(cy, cm), total });
-    }
+    const savingsEvolution = getSavingsEvolution(db, y, m, pid);
 
     // ── SAVINGS GOAL ───────────────────────────────────────────────────────
     let savingsGoalProgress: object;
@@ -255,7 +227,7 @@ export async function dashboardRoutes(app: FastifyInstance, db: Database.Databas
     } else {
       // Household view: aggregate all savings goals
       const savingsGoalRows = db.prepare<[], { id: number; target_amount: number | null; target_date: string | null }>(
-        'SELECT id, target_amount, target_date FROM savings WHERE target_amount IS NOT NULL'
+        `SELECT id, target_amount, target_date FROM savings WHERE target_amount IS NOT NULL AND id IN (${BUDGET_SAVINGS_IDS})`
       ).all();
 
       const allSavingsGoalTarget = savingsGoalRows.reduce((s, r) => s + (r.target_amount || 0), 0);
