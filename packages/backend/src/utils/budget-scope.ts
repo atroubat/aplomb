@@ -14,6 +14,14 @@ export function isBudgetPerson(db: Database.Database, id: number): boolean {
   return !!db.prepare(`SELECT id FROM persons WHERE id = ? AND role = 'adult'`).get(id);
 }
 
+export function getSavingsBalance(db: Database.Database, savingsId: number, excludingTransactionId = -1): number {
+  const row = db.prepare(`SELECT opening_balance + COALESCE((
+    SELECT SUM(CASE WHEN type = 'deposit' THEN amount ELSE -amount END)
+    FROM savings_transactions WHERE savings_id = savings.id AND id != ?
+  ), 0) AS balance FROM savings WHERE id = ?`).get(excludingTransactionId, savingsId) as { balance: number } | undefined;
+  return row?.balance ?? 0;
+}
+
 /** Balance history, including gifts; child-owned products are opt-in. */
 export function getSavingsEvolution(db: Database.Database, year: number, month: number, personId?: number, includeChildren = false) {
   return Array.from({ length: 12 }, (_, index) => {
@@ -25,6 +33,12 @@ export function getSavingsEvolution(db: Database.Database, year: number, month: 
     const row = db.prepare(`SELECT COALESCE(SUM(CASE WHEN type = 'deposit' THEN amount ELSE -amount END), 0) AS total
       FROM savings_transactions WHERE date <= ? AND ${scope}`)
       .get(...(personId ? [`${period}-31`, personId] : [`${period}-31`])) as { total: number };
-    return { month: period, total: row.total };
+    const openingScope = personId
+      ? 'person_id = ? AND (is_common = 0 OR is_common IS NULL)'
+      : includeChildren ? '1 = 1' : `id IN (${BUDGET_SAVINGS_IDS})`;
+    const opening = db.prepare(`SELECT COALESCE(SUM(opening_balance), 0) AS total FROM savings
+      WHERE opening_balance_date <= ? AND ${openingScope}`)
+      .get(...(personId ? [`${period}-31`, personId] : [`${period}-31`])) as { total: number };
+    return { month: period, total: row.total + opening.total };
   });
 }

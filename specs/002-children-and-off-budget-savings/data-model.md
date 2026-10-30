@@ -20,7 +20,16 @@ Only adults participate in budgets. Savings products qualify when common, unowne
 
 Balance calculations include all deposits and withdrawals, independently of budget eligibility.
 
-## History
+## Opening balances and child account activation
+
+- `savings.opening_balance`: non-null numeric balance, default `0`.
+- `savings.opening_balance_date`: nullable date marking the start of known balance history.
+- `POST /api/accounts/:id/savings-transactions` takes the existing transaction payload. It accepts child-owned accounts only, reuses a uniquely linked child-owned product, or atomically creates one with the account's entered balance and the requested movement. It returns `{ savings, transaction }`. Invalid dates, conflicting ownership, and insufficient funds are rejected without creating a product.
+- Only the submitted movement is a transaction; an opening balance is not an attributed deposit. It does not affect monthly contribution totals.
+- Normal savings balances and withdrawal validation include the opening balance. History includes it from the opening date, never for unknown earlier periods.
+- Export/import preserves both fields; old exports default to zero and a null date.
+
+## History endpoints
 
 `GET /api/savings/evolution?year=YYYY&month=MM` returns twelve `{ month: YYYY-MM, total: number }` end-of-month balances including children and gifts. Year/month are validated. The same endpoint is available under `/demo/api` for isolated demo data.
 

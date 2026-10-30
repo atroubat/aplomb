@@ -85,6 +85,8 @@ export interface Savings {
   /** Which person's account physically hosts this savings product */
   hosted_by_person_id: number | null;
   balance: number;
+  opening_balance: number;
+  opening_balance_date: string | null;
   created_at?: string;
 }
 

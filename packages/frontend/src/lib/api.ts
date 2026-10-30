@@ -99,6 +99,8 @@ export const api = {
   deleteSavings: (id: number) => request<void>(`/savings/${id}`, { method: 'DELETE' }),
 
   // ── SAVINGS TRANSACTIONS ──────────────────────────────────────────────────
+  createChildAccountSavingsTransaction: (accountId: number, data: object) =>
+    request<{ savings: import('../types').Savings; transaction: import('../types').SavingsTransaction }>(`/accounts/${accountId}/savings-transactions`, { method: 'POST', body: JSON.stringify(data) }),
   getSavingsTransactions: (savingsId: number, params?: { type?: 'deposit' | 'withdrawal' }) => {
     const qs = params?.type ? `?type=${params.type}` : '';
     return request<import('../types').SavingsTransaction[]>(`/savings/${savingsId}/transactions${qs}`);

@@ -33,6 +33,7 @@ export default function SavingsPage() {
   const [editing, setEditing] = useState<Savings | null>(null);
   const [deleting, setDeleting] = useState<Savings | null>(null);
   const [txModal, setTxModal] = useState<{ savings: Savings; type: 'deposit' | 'withdrawal' } | null>(null);
+  const [accountTxModal, setAccountTxModal] = useState<{ account: Account; type: 'deposit' | 'withdrawal' } | null>(null);
   const [editingTx, setEditingTx] = useState<{ tx: SavingsTransaction; savings: Savings } | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [transactionRevision, setTransactionRevision] = useState(0);
@@ -61,6 +62,16 @@ export default function SavingsPage() {
       await api.updateSavingsTransaction(editingTx.tx.id, data);
       showToast('Transaction mise à jour');
       setEditingTx(null); refetch(); refetchEvolution(); setTransactionRevision(v => v + 1);
+    } catch (e: unknown) { showToast((e as Error).message, 'error'); }
+  };
+
+  const handleAccountTxSubmit = async (data: object) => {
+    if (!accountTxModal) return;
+    try {
+      const result = await api.createChildAccountSavingsTransaction(accountTxModal.account.id, data);
+      setAccountTxModal(null); setExpandedId(result.savings.id);
+      refetch(); refetchEvolution(); setTransactionRevision(v => v + 1);
+      showToast('Mouvement enregistré, solde de départ conservé');
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
   };
 
@@ -173,7 +184,9 @@ export default function SavingsPage() {
                 onTransactionsChanged={() => { refetch(); refetchEvolution(); }}
               />
             ))}
-            {childAccounts.map(account => <ChildAccountCard key={account.id} account={account} owner={persons!.find(p => p.id === account.person_id)!} />)}
+            {childAccounts.map(account => <ChildAccountCard key={account.id} account={account} owner={persons!.find(p => p.id === account.person_id)!}
+              onDeposit={() => setAccountTxModal({ account, type: 'deposit' })}
+              onWithdraw={() => setAccountTxModal({ account, type: 'withdrawal' })} />)}
           </div>
         </section>
       )}
@@ -222,13 +235,22 @@ export default function SavingsPage() {
         )}
       </Modal>
 
+      <Modal open={!!accountTxModal} onClose={() => setAccountTxModal(null)} title={accountTxModal?.type === 'deposit' ? 'Versement sur le livret enfant' : 'Retrait du livret enfant'} size="sm">
+        {accountTxModal && <>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Le solde actuel de {formatCurrency(accountTxModal.account.initial_balance)} sera conservé comme solde de départ à la date de ce premier mouvement, sans être enregistré comme un versement. Le livret restera hors budget.</p>
+          <SavingsTransactionForm type={accountTxModal.type} balance={accountTxModal.account.initial_balance}
+            persons={persons || []} isCommon={false} defaultPersonId={accountTxModal.account.person_id}
+            onSubmit={handleAccountTxSubmit} onCancel={() => setAccountTxModal(null)} />
+        </>}
+      </Modal>
+
       <ConfirmDialog open={!!deleting} onClose={() => setDeleting(null)} onConfirm={handleDelete} loading={deleteLoading}
         title="Supprimer le produit" message={`Supprimer "${deleting?.label}" et toutes ses transactions ?`} />
     </div>
   );
 }
 
-function ChildAccountCard({ account, owner }: { account: Account; owner: Person }) {
+function ChildAccountCard({ account, owner, onDeposit, onWithdraw }: { account: Account; owner: Person; onDeposit: () => void; onWithdraw: () => void }) {
   return (
     <article className="savings-register-item card-hover p-5">
       <div className="flex items-center gap-1.5 flex-wrap mb-2">
@@ -238,7 +260,11 @@ function ChildAccountCard({ account, owner }: { account: Account; owner: Person 
       <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 break-words">{account.name}</h3>
       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Compte enfant · hors budget</p>
       <p className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-4">{formatCurrency(account.initial_balance)}</p>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Solde renseigné dans Réglages, sans historique de versements.</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Solde de départ renseigné dans Réglages. Le suivi commencera avec ton premier mouvement.</p>
+      <div className="flex gap-2 mt-4">
+        <Button variant="success" size="sm" className="flex-1" icon={<ArrowDownToLine size={14}/>} onClick={onDeposit}>Verser</Button>
+        <Button variant="danger" size="sm" className="flex-1" icon={<ArrowUpFromLine size={14}/>} onClick={onWithdraw}>Retirer</Button>
+      </div>
       <Link to="/settings?section=accounts" className="inline-flex items-center gap-2 min-h-11 mt-4 text-sm font-medium text-[var(--color-accent)] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"><Pencil size={14} aria-hidden="true"/> Modifier dans Réglages</Link>
     </article>
   );
@@ -296,6 +322,7 @@ function SavingsCard({ sv, persons, expanded, onExpand, onEdit, onDelete, onDepo
         </div>
 
         <div className="text-3xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(sv.balance)}</div>
+        {!!sv.opening_balance && <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Solde de départ repris : {formatCurrency(sv.opening_balance)}{sv.opening_balance_date ? ` au ${formatDate(sv.opening_balance_date)}` : ''} · hors versements</p>}
 
         {progress !== null && (
           <div className="mt-3">

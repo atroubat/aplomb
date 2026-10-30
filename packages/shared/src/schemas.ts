@@ -105,7 +105,7 @@ export const SavingsSchema = z.object({
 export const SavingsTransactionSchema = z.object({
   type: z.enum(['deposit', 'withdrawal']),
   amount: z.number().positive(),
-  date: z.string(),
+  date: z.iso.date(),
   reason: z.string().optional().nullable(),
   note: z.string().optional().nullable(),
   personId: z.number().int().positive().optional().nullable(),

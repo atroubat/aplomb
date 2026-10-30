@@ -20,7 +20,7 @@ const TABLES = [
   { key: 'incomes',             table: 'incomes',              columns: ['id', 'person_id', 'label', 'amount', 'frequency', 'account_id', 'is_active', 'is_variable', 'start_date', 'end_date', 'created_at'] },
   { key: 'fixedCharges',        table: 'fixed_charges',        columns: ['id', 'label', 'amount', 'category', 'frequency', 'account_id', 'is_active', 'is_smoothed', 'start_date', 'end_date', 'created_at'] },
   { key: 'personalCharges',     table: 'personal_charges',     columns: ['id', 'person_id', 'label', 'amount', 'category', 'frequency', 'account_id', 'is_active', 'start_date', 'end_date', 'created_at'] },
-  { key: 'savings',             table: 'savings',              columns: ['id', 'label', 'type', 'target_amount', 'target_date', 'account_id', 'person_id', 'is_common', 'hosted_by_person_id', 'created_at'] },
+  { key: 'savings',             table: 'savings',              columns: ['id', 'label', 'type', 'target_amount', 'target_date', 'account_id', 'person_id', 'is_common', 'hosted_by_person_id', 'opening_balance', 'opening_balance_date', 'created_at'] },
   { key: 'savingsTransactions', table: 'savings_transactions', columns: ['id', 'savings_id', 'type', 'amount', 'date', 'reason', 'note', 'person_id', 'is_excluded_from_budget', 'created_at'] },
   { key: 'incomeOverrides',     table: 'income_overrides',     columns: ['id', 'income_id', 'year', 'month', 'amount', 'note', 'created_at'] },
   { key: 'transfers',           table: 'transfers',            columns: ['id', 'from_account_id', 'to_account_id', 'amount', 'date', 'label', 'note', 'created_at'] },
@@ -76,7 +76,7 @@ export async function dataRoutes(app: FastifyInstance, db: Database.Database) {
             if (!row || typeof row !== 'object') {
               throw new Error(`Ligne invalide dans « ${key} ».`);
             }
-            stmt.run(...columns.map((c) => row[c] ?? (c === 'role' ? 'adult' : c === 'is_excluded_from_budget' ? 0 : null)));
+            stmt.run(...columns.map((c) => row[c] ?? (c === 'role' ? 'adult' : c === 'is_excluded_from_budget' || c === 'opening_balance' ? 0 : null)));
           }
         }
       });

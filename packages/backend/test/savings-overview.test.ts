@@ -12,6 +12,7 @@ const account = (id: number, personId: number, balance: number): Account => ({
 const savings = (id: number, personId: number | null, balance: number, accountId: number | null = null): Savings => ({
   id, person_id: personId, label: 'Book', type: 'livret', balance, account_id: accountId,
   is_common: personId === null ? 1 : 0, hosted_by_person_id: null, target_amount: null, target_date: null,
+  opening_balance: 0, opening_balance_date: null,
 });
 
 describe('Savings-page overview', () => {

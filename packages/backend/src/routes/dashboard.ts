@@ -3,20 +3,12 @@ import Database from 'better-sqlite3';
 import { toMonthlyAmount, getEffectiveMonthlyIncome, getMissingVariableIncomeIds, isActiveInMonth, getChargeAmountForMonth, getPersonMonthSavings } from '../utils/monthly-calc.js';
 import { computeHouseholdSplit } from '../utils/household-split.js';
 import { round2 } from '../utils/money.js';
-import { BUDGET_PERSON_IDS, BUDGET_SAVINGS_IDS, BUDGET_DEPOSIT_FILTER, isBudgetPerson, getSavingsEvolution } from '../utils/budget-scope.js';
+import { BUDGET_PERSON_IDS, BUDGET_SAVINGS_IDS, BUDGET_DEPOSIT_FILTER, isBudgetPerson, getSavingsEvolution, getSavingsBalance as getBalance } from '../utils/budget-scope.js';
 
 type Frequency = 'monthly' | 'quarterly' | 'yearly';
 
 function monthStr(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, '0')}`;
-}
-
-function getBalance(db: Database.Database, savingsId: number): number {
-  const row = db.prepare<[number], { balance: number }>(
-    `SELECT COALESCE(SUM(CASE WHEN type='deposit' THEN amount ELSE -amount END), 0) as balance
-     FROM savings_transactions WHERE savings_id = ?`
-  ).get(savingsId) as { balance: number };
-  return row?.balance ?? 0;
 }
 
 

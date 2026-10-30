@@ -21,6 +21,8 @@
 - **FR-008** Editing an unrelated field never resets a child role or off-budget designation.
 - **FR-009** The Savings page also lists child-owned accounts created in Settings without an associated savings product. Their entered balance is visible in the children's subtotal and overall displayed total, never in budget/advice calculations.
 - **FR-010** A linked account is not added again to savings totals. Account-only balances are labelled as entered balances without transaction history; no deposit history is fabricated.
+- **FR-011** Child account-only cards offer deposits and withdrawals. Confirming the first movement atomically creates a child-owned linked product, copies the entered balance into a separate opening balance dated to the movement, and records only the actual movement. Cancelling or a rejected withdrawal creates nothing.
+- **FR-012** Later movements reuse that product without recopying the opening balance. Full balances, withdrawals, corrections, balance history and backup/restore include the opening balance without treating it as a monthly contribution. Earlier date corrections extend the known opening date as needed; earlier history is never backfilled automatically.
 
 ## Scope boundaries
 

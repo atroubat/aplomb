@@ -13,3 +13,5 @@
 - [x] Build frontend, backend and the production Docker image.
 - [x] Display child-owned account-only balances in the Savings page without synthetic transactions or duplicate linked balances.
 - [x] Add five display-model regression tests (47 total tests passing).
+- [x] Activate child account transaction tracking on the first confirmed movement with a separate, preserved opening balance.
+- [x] Add eleven activation, withdrawal, history, backup, atomicity and budget-isolation tests (58 total tests passing).
