@@ -19,6 +19,8 @@
 - **FR-006** All deposits, including gifts, continue to count in actual balances and balance history and can be withdrawn subject to the full available balance.
 - **FR-007** Both new attributes survive export/import. Older backups restore adults and budgeted transactions by default.
 - **FR-008** Editing an unrelated field never resets a child role or off-budget designation.
+- **FR-009** The Savings page also lists child-owned accounts created in Settings without an associated savings product. Their entered balance is visible in the children's subtotal and overall displayed total, never in budget/advice calculations.
+- **FR-010** A linked account is not added again to savings totals. Account-only balances are labelled as entered balances without transaction history; no deposit history is fabricated.
 
 ## Scope boundaries
 

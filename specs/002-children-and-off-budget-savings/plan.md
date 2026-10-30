@@ -8,6 +8,7 @@
 - Apply scope rules in dashboard, advice, effective-income/history, and monthly savings helpers; do not filter actual product balances.
 - Provide a dedicated complete Savings-page history endpoint rather than reusing budget-scoped dashboard history.
 - Reuse existing selects, checkbox styles and modal structure. Keep all current themes and navigation.
+- Partition Savings-page products into common/adult/child collections. Show unlinked child accounts alongside child products, using entered account balances without changing stored data or budget calculations. Deduplicate by `account_id`; provide a Settings account-editor deep link.
 
 ## Verification
 

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Download, Upload, RefreshCw, Zap, Users, WalletCards, Database, Landmark, PiggyBank, BarChart3, UserRound, type LucideIcon } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import { api } from '../lib/api';
@@ -15,7 +16,10 @@ import { Person, Account } from '../types';
 type Section = 'persons' | 'accounts' | 'data';
 
 export default function Settings() {
-  const [activeSection, setActiveSection] = useState<Section>('persons');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const section = searchParams.get('section');
+  const activeSection: Section = section === 'accounts' || section === 'data' ? section : 'persons';
+  const setActiveSection = (value: Section) => setSearchParams({ section: value }, { replace: true });
   const [resetConfirm, setResetConfirm] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const { showToast } = useToast();

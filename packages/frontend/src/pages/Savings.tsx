@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, Home as House, UserRound, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import { api } from '../lib/api';
@@ -13,19 +14,20 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SavingsForm } from '../components/forms/SavingsForm';
 import { SavingsTransactionForm } from '../components/forms/SavingsTransactionForm';
 import { SavingsLineChart } from '../components/charts/SavingsLineChart';
-import { formatCurrency, formatDate, savingsTypeLabels } from '../lib/formatters';
-import { Savings, SavingsTransaction, Person } from '../types';
+import { formatCurrency, formatDate, savingsTypeLabels, accountTypeLabels } from '../lib/formatters';
+import { buildSavingsOverview } from '../lib/savings-overview';
+import { Account, Savings, SavingsTransaction, Person } from '../types';
 
 export default function SavingsPage() {
   const { showToast } = useToast();
   const { year, month } = useFilters();
-  const { data: savingsList, loading, refetch } = useApi(() => api.getSavings(), []);
+  const { data: savingsList, loading, error: savingsError, refetch } = useApi(() => api.getSavings(), []);
   const { data: evolution, refetch: refetchEvolution } = useApi(
     () => api.getSavingsEvolution(year, month),
     [year, month]
   );
-  const { data: persons } = useApi<Person[]>(() => api.getPersons(), []);
-  const { data: accounts } = useApi(() => api.getAccounts(), []);
+  const { data: persons, loading: personsLoading, error: personsError } = useApi<Person[]>(() => api.getPersons(), []);
+  const { data: accounts, loading: accountsLoading, error: accountsError } = useApi(() => api.getAccounts(), []);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Savings | null>(null);
@@ -70,9 +72,9 @@ export default function SavingsPage() {
     finally { setDeleteLoading(false); }
   };
 
-  const commonSavings = (savingsList || []).filter(s => s.is_common);
-  const personalSavings = (savingsList || []).filter(s => !s.is_common);
-  const total = (savingsList || []).reduce((s, sv) => s + sv.balance, 0);
+  const { commonSavings, personalSavings, childSavings, childAccounts, childTotal, total } = buildSavingsOverview(savingsList || [], accounts || [], persons || []);
+  const overviewLoading = loading || personsLoading || accountsLoading;
+  const overviewError = savingsError || personsError || accountsError;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -80,6 +82,8 @@ export default function SavingsPage() {
         <h1 className="text-3xl font-display font-bold tracking-tight text-slate-800 dark:text-white">Épargne</h1>
         <Button onClick={() => { setEditing(null); setModalOpen(true); }} icon={<Plus size={16} />}>Nouveau produit</Button>
       </div>
+
+      {overviewError && <p role="alert" className="text-sm text-red-500">Impossible de charger tous les comptes : {overviewError}</p>}
 
       {/* Summary */}
       <Card className="savings-summary">
@@ -89,6 +93,7 @@ export default function SavingsPage() {
         <div className="savings-summary-split flex gap-4 text-sm mt-2">
           <span><House size={15}/> Commun : {formatCurrency(commonSavings.reduce((s, sv) => s + sv.balance, 0))}</span>
           <span><UserRound size={15}/> Personnel : {formatCurrency(personalSavings.reduce((s, sv) => s + sv.balance, 0))}</span>
+          {(childSavings.length > 0 || childAccounts.length > 0) && <span><UserRound size={15}/> Enfants : {formatCurrency(childTotal)}</span>}
         </div>
       </Card>
 
@@ -117,15 +122,15 @@ export default function SavingsPage() {
       )}
 
       {/* Personal savings */}
-      {loading ? (
+      {overviewLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1,2,3].map(i => <div key={i} className="h-48 glass rounded-2xl animate-pulse" />)}
         </div>
-      ) : !savingsList?.length ? (
+      ) : !savingsList?.length && !childAccounts.length && !overviewError ? (
         <EmptyState title="Aucun produit d'épargne" description="Créez un livret, PEA, assurance vie..." action={{ label: 'Nouveau produit', onClick: () => setModalOpen(true) }} />
       ) : personalSavings.length > 0 ? (
         <div>
-          {commonSavings.length > 0 && (
+          {(commonSavings.length > 0 || childSavings.length > 0 || childAccounts.length > 0) && (
             <h2 className="section-title"><UserRound size={16}/> Épargne personnelle</h2>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -148,10 +153,36 @@ export default function SavingsPage() {
         </div>
       ) : null}
 
+      {!overviewLoading && (childSavings.length > 0 || childAccounts.length > 0) && (
+        <section aria-labelledby="children-savings-title">
+          <h2 id="children-savings-title" className="section-title"><UserRound size={16} aria-hidden="true"/> Comptes et livrets des enfants</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Consultables ici, sans entrer dans le budget du foyer ni les conseils.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {childSavings.map(sv => (
+              <SavingsCard
+                key={`${sv.id}-${transactionRevision}`}
+                sv={sv}
+                persons={persons || []}
+                expanded={expandedId === sv.id}
+                onExpand={() => setExpandedId(expandedId === sv.id ? null : sv.id)}
+                onEdit={() => { setEditing(sv); setModalOpen(true); }}
+                onDelete={() => setDeleting(sv)}
+                onDeposit={() => setTxModal({ savings: sv, type: 'deposit' })}
+                onWithdraw={() => setTxModal({ savings: sv, type: 'withdrawal' })}
+                onEditTx={tx => setEditingTx({ tx, savings: sv })}
+                onTransactionsChanged={() => { refetch(); refetchEvolution(); }}
+              />
+            ))}
+            {childAccounts.map(account => <ChildAccountCard key={account.id} account={account} owner={persons!.find(p => p.id === account.person_id)!} />)}
+          </div>
+        </section>
+      )}
+
       {/* Evolution chart */}
       {savingsList && savingsList.length > 0 && (
         <Card className="savings-evolution-card">
           <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-4">Évolution de l'épargne</h2>
+          {childAccounts.length > 0 && <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Historique des produits d’épargne uniquement. Les soldes des comptes renseignés dans Réglages n’ont pas d’historique de mouvements et ne figurent pas dans ce graphique.</p>}
           <div className="savings-chart-frame">
             <SavingsLineChart data={evolution || []} />
           </div>
@@ -194,6 +225,22 @@ export default function SavingsPage() {
       <ConfirmDialog open={!!deleting} onClose={() => setDeleting(null)} onConfirm={handleDelete} loading={deleteLoading}
         title="Supprimer le produit" message={`Supprimer "${deleting?.label}" et toutes ses transactions ?`} />
     </div>
+  );
+}
+
+function ChildAccountCard({ account, owner }: { account: Account; owner: Person }) {
+  return (
+    <article className="savings-register-item card-hover p-5">
+      <div className="flex items-center gap-1.5 flex-wrap mb-2">
+        <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-medium">{accountTypeLabels[account.type]}</span>
+        <span className="savings-owner-badge text-xs px-2 py-0.5 rounded-full text-white font-medium" style={{ backgroundColor: owner.color }}><UserRound size={12} aria-hidden="true"/> {owner.name}</span>
+      </div>
+      <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 break-words">{account.name}</h3>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Compte enfant · hors budget</p>
+      <p className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-4">{formatCurrency(account.initial_balance)}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Solde renseigné dans Réglages, sans historique de versements.</p>
+      <Link to="/settings?section=accounts" className="inline-flex items-center gap-2 min-h-11 mt-4 text-sm font-medium text-[var(--color-accent)] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"><Pencil size={14} aria-hidden="true"/> Modifier dans Réglages</Link>
+    </article>
   );
 }
 

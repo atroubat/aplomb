@@ -41,6 +41,8 @@ The functional specification, data model, API contract, and implementation plan 
 
 In **Settings → People**, choose the **Child** profile when adding or editing a household member. Children remain available as account and savings owners, but do not appear in income, expense, budget-view or advice selectors. Their savings are visible in the Savings page, including its total balance and history, but excluded from dashboard budget calculations and history.
 
+The **Children's accounts and savings** section also shows accounts created in Settings that are not linked to a savings product. These cards display the balance entered in Settings and link back to its editor. Linked accounts are not counted twice: their savings product provides the displayed balance. Account-only balances have no transaction history, so they are not included in the savings evolution chart. No synthetic deposits or automatic conversions are created.
+
 For a gift or exceptional deposit, enable **Off budget** in the savings deposit form (French UI: **Hors budget**). This option is also editable in transaction history. The money still increases the product balance and remains visible in balance history; it does not consume monthly income, count towards monthly savings contributions, or affect budgeting advice. Existing people remain adults and existing deposits remain budgeted unless explicitly changed.
 
 See [`specs/002-children-and-off-budget-savings`](specs/002-children-and-off-budget-savings) for the extension specification.

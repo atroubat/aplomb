@@ -11,3 +11,5 @@
 - [x] Verify mobile portrait/landscape and desktop dialog layout and light/dark themes on isolated data.
 - [x] Verify child creation, off-budget deposit creation/editing, and adult-only views in the browser.
 - [x] Build frontend, backend and the production Docker image.
+- [x] Display child-owned account-only balances in the Savings page without synthetic transactions or duplicate linked balances.
+- [x] Add five display-model regression tests (47 total tests passing).
