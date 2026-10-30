@@ -19,6 +19,9 @@ Thank you for considering a contribution.
 3. Make a focused change that preserves existing functional behavior unless the
    issue explicitly changes the specification.
 4. Add or update tests when behavior changes.
+   Update the relevant specifications and README for feature changes, and add a
+   concise entry under **Unreleased** in [CHANGELOG.md](CHANGELOG.md). Use English
+   for project documentation and never include real household data in examples.
 5. Run the checks below.
 6. Open a pull request with a concise explanation and screenshots for visual
    changes.

@@ -4,7 +4,9 @@
 
 Aplomb is a self-hosted household budget planner designed to answer a simple question: **how should our monthly income be allocated?**
 
-It focuses on planning rather than bank-account tracking. Aplomb supports household and personal views, fixed or temporary income, shared and personal expenses, savings accounts, monthly savings contributions, and budget guidance based on common allocation methods.
+It focuses on planning rather than bank-account tracking. Aplomb combines household and personal budgets, effective-dated income changes, shared and personal expenses, adult and children's savings, off-budget gifts, and individual budget guidance.
+
+See the [changelog](CHANGELOG.md) for the latest changes and upgrade notes. The application interface is currently in French; project documentation is in English.
 
 > [!IMPORTANT]
 > Aplomb is a personal planning tool, not accounting, banking, tax, investment, or financial advice. See [DISCLAIMER.md](DISCLAIMER.md).
@@ -13,10 +15,12 @@ It focuses on planning rather than bank-account tracking. Aplomb supports househ
 
 - Monthly household budget planning
 - Household and per-person views
-- Fixed, variable, and temporary monthly income
+- Fixed and variable income, with temporary month-specific overrides
+- Income changes effective from a chosen month, preserving previous budget calculations
 - Shared and personal recurring expenses
-- Savings accounts, balances, deposits, withdrawals, and monthly goals
+- Savings products, balances, monthly goals, and editable deposits and withdrawals
 - Child profiles with their own accounts and savings, excluded from budgeting and advice
+- Dedicated children's section with visible balances, including accounts entered in Settings
 - Optional off-budget savings deposits for gifts or exceptional funds
 - 50/30/20 and 75/15/10 planning guidance
 - Demo mode with isolated sample data
@@ -30,12 +34,20 @@ It focuses on planning rather than bank-account tracking. Aplomb supports househ
 The main application is organized around five areas:
 
 1. **Budget** — monthly overview, household allocation, cash flow, and savings history.
-2. **Income** — recurring income and month-specific overrides.
+2. **Income** — fixed or variable recurring income, month-specific overrides, and future salary changes without rewriting past months.
 3. **Expenses** — shared and personal expenses with recurrence and effective dates.
-4. **Savings** — savings products, ownership, balances, deposits, and withdrawals.
-5. **Advice** — planning guidance based on the selected household member and budget method.
+4. **Savings** — common, personal, and children's products; visible balances, editable movements, goals, and off-budget deposits. Child accounts created in Settings are also visible without duplicate linked balances.
+5. **Advice** — individual planning guidance for adults, based on the selected budget method; children and off-budget deposits are excluded.
 
-The functional specification, data model, API contract, and implementation plan are available in [`specs/001-functional-parity`](specs/001-functional-parity).
+**Settings** provides household profiles, account management, JSON backups, and restore tools. Demo mode uses a separate database.
+
+The baseline specification, data model, API contract, and implementation plan are available in [`specs/001-functional-parity`](specs/001-functional-parity). Child profiles and off-budget savings are documented in [`specs/002-children-and-off-budget-savings`](specs/002-children-and-off-budget-savings).
+
+### Income changes and transaction corrections
+
+For a salary increase or another recurring income change, choose its effective month when editing the income. Aplomb closes the preceding income version and starts the new one from that month, preserving earlier calculations. Use a monthly override instead when the change is temporary, such as parental leave or an exceptional payment.
+
+Savings movements can be edited from a product's transaction history, including the date, amount, attribution, note, and off-budget designation for a deposit. Withdrawal corrections remain subject to the available product balance.
 
 ### Children and off-budget savings
 
